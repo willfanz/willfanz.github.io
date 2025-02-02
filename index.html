@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Plug - in Usage Instructions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Game Plug - in Usage Instructions</h1>
+
+    <h2>I. Plug - in Purpose</h2>
+    <p>This game plug - in is designed to provide developers with an efficient data management and loading solution,
+        facilitating a smoother and more convenient game development process. Through the APIs provided by the plug - in,
+        game data can be easily loaded and specific elements can be retrieved, reducing repetitive labor during
+        development.</p>
+
+    <h2>II. API Usage Methods</h2>
+    <h3>1. IGameData.Load&lt;T&gt;()</h3>
+    <p><strong>Function</strong>: Used to load game data, where &lt;T&gt; represents the data type to be loaded. For
+        example, if you want to load character attribute data, you can replace &lt;T&gt; with the character attribute
+        data type.</p>
+    <ul>
+        <li><strong>Usage Steps</strong>:</li>
+        <li>First, introduce the relevant namespace of the plug - in in the code to ensure that the <code>IGameData</code>
+            interface can be used.</li>
+        <li>Then, use the <code>IGameData.Load&lt;T&gt;()</code> method to load data. For example,
+            <code>var characterData = IGameData.Load&lt;CharacterData&gt;();</code>, where <code>CharacterData</code> is a
+            custom character data type.</li>
+    </ul>
+
+    <h3>2. GameDataWithTable.GetElement(string referenceId)</h3>
+    <p><strong>Function</strong>: Retrieves the corresponding element from the game data with a table structure based
+        on the passed - in <code>referenceId</code>. For example, in the character data table, each character has a
+        unique <code>referenceId</code>, and the detailed information of a specific character can be obtained through
+        this API.</p>
+    <ul>
+        <li><strong>Usage Steps</strong>:</li>
+        <li>Similarly, introduce the relevant namespace first.</li>
+        <li>Call the <code>GameDataWithTable.GetElement(string referenceId)</code> method and pass in the
+            <code>referenceId</code> of the target element. For example,
+            <code>var targetElement = GameDataWithTable.GetElement("character_001");</code>, where
+            <code>"character_001"</code> is the <code>referenceId</code> of a certain character.</li>
+    </ul>
+
+    <h2>III. Common Problems and Solutions</h2>
+    <ul>
+        <li><strong>Namespace Not Found</strong>: Confirm whether the relevant namespace of the plug - in is correctly
+            imported. Check whether the plug - in installation path is correct and the project's reference settings.</li>
+        <li><strong>Data Loading Failure</strong>: Check whether the type of &lt;T&gt; is consistent with the actual
+            stored data type and ensure that the data file path is correct.</li>
+    </ul>
+
+</body>
+
+</html>
