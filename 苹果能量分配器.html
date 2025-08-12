@@ -155,9 +155,9 @@
 
       <!-- 右侧：分析区域 -->
       <div class="space-y-8">
-        <!-- 能量分布图表 -->
+        <!-- 能量分布图表 - 修改为按情绪分类的环形图 -->
         <div class="bg-white rounded-xl shadow-lg p-6">
-          <h3 class="text-xl font-bold text-gray-800 mb-4">能量分布</h3>
+          <h3 class="text-xl font-bold text-gray-800 mb-4">情绪能量分布</h3>
           <div class="h-64">
             <canvas id="energyChart"></canvas>
           </div>
@@ -268,6 +268,13 @@
       { energy: 20, emotion: "自闭", expression: "自我封闭" }
     ];
 
+    // 为每个情绪分配唯一颜色（用于图表展示）
+    const emotionColors = [
+      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF',
+      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF',
+      '#FF6384', '#36A2EB', '#FFCE56'
+    ];
+
     // 全局变量
     let appleDistribution = {};
     let totalApples = 10;
@@ -298,7 +305,7 @@
       // 渲染情绪情感列表
       renderEmotionList();
       
-      // 初始化图表
+      // 初始化图表 - 修改为按情绪分类的环形图
       initChart();
       
       // 更新统计信息
@@ -456,20 +463,18 @@
       }, 1000);
     }
 
-    // 初始化图表
+    // 初始化图表 - 修改为按情绪分类的环形图
     function initChart() {
       const ctx = document.getElementById('energyChart').getContext('2d');
       
+      // 初始只显示未分配状态
       energyChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['已分配能量', '未分配能量'],
+          labels: ['未分配'],
           datasets: [{
-            data: [0, 10000],
-            backgroundColor: [
-              '#8B5CF6',
-              '#E5E7EB'
-            ],
+            data: [10],
+            backgroundColor: ['#E5E7EB'],
             borderWidth: 0,
             cutout: '70%'
           }]
@@ -486,18 +491,53 @@
                   size: 12
                 }
               }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  return `${label}: ${value} 个苹果`;
+                }
+              }
             }
           }
         }
       });
     }
 
-    // 更新图表
+    // 更新图表 - 按情绪分类显示
     function updateChart() {
-      const totalEnergy = emotionData.reduce((sum, emotion) => sum + (emotion.energy * appleDistribution[emotion.emotion]), 0);
-      const maxPossibleEnergy = emotionData.reduce((sum, emotion) => sum + emotion.energy, 0) * totalApples / emotionData.length;
+      const usedApples = Object.values(appleDistribution).reduce((sum, count) => sum + count, 0);
+      const remainingApples = totalApples - usedApples;
       
-      energyChart.data.datasets[0].data = [totalEnergy, Math.max(0, maxPossibleEnergy - totalEnergy)];
+      // 获取有分配苹果的情绪
+      const assignedEmotions = emotionData.filter(emotion => appleDistribution[emotion.emotion] > 0);
+      
+      // 准备图表数据
+      let labels = [];
+      let data = [];
+      let backgroundColor = [];
+      
+      // 添加已分配的情绪
+      assignedEmotions.forEach(emotion => {
+        const index = emotionData.findIndex(e => e.emotion === emotion.emotion);
+        labels.push(emotion.emotion);
+        data.push(appleDistribution[emotion.emotion]);
+        backgroundColor.push(emotionColors[index]);
+      });
+      
+      // 添加未分配部分
+      if (remainingApples > 0) {
+        labels.push('未分配');
+        data.push(remainingApples);
+        backgroundColor.push('#E5E7EB');
+      }
+      
+      // 更新图表
+      energyChart.data.labels = labels;
+      energyChart.data.datasets[0].data = data;
+      energyChart.data.datasets[0].backgroundColor = backgroundColor;
       energyChart.update();
     }
 
@@ -567,3 +607,4 @@
   </script>
 </body>
 </html>
+    
