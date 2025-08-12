@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>苹果能量分配器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#8B5CF6',
+            secondary: '#EC4899',
+            accent: '#F59E0B',
+            success: '#10B981',
+            warning: '#F97316',
+            danger: '#EF4444',
+            info: '#3B82F6',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      .btn-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .energy-high {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      }
+      .energy-medium {
+        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      }
+      .energy-low {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+  <!-- 导航栏 -->
+  <header class="gradient-bg shadow-md fixed w-full top-0 z-50 transition-all duration-300" id="navbar">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-apple text-3xl text-white"></i>
+        <h1 class="text-2xl font-bold text-white">苹果能量分配器</h1>
+      </div>
+      
+      <div class="hidden md:flex items-center space-x-8">
+        <a href="#" class="font-medium text-white hover:text-gray-200 transition-colors">首页</a>
+        <a href="#" class="font-medium text-white hover:text-gray-200 transition-colors">能量指南</a>
+        <a href="#" class="font-medium text-white hover:text-gray-200 transition-colors">关于</a>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <button id="helpBtn" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors">
+          <i class="fa fa-question-circle mr-2"></i>帮助
+        </button>
+        <button class="md:hidden text-white hover:text-gray-200 transition-colors" id="menuBtn">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 移动端菜单 -->
+    <div class="md:hidden hidden bg-white shadow-lg absolute w-full" id="mobileMenu">
+      <div class="container mx-auto px-4 py-3 flex flex-col space-y-4">
+        <a href="#" class="font-medium text-gray-800 hover:text-primary transition-colors py-2 border-b border-gray-100">首页</a>
+        <a href="#" class="font-medium text-gray-800 hover:text-primary transition-colors py-2 border-b border-gray-100">能量指南</a>
+        <a href="#" class="font-medium text-gray-800 hover:text-primary transition-colors py-2">关于</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要内容 -->
+  <main class="container mx-auto px-4 pt-24 pb-16">
+    <!-- 顶部状态栏 -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="text-center md:text-left mb-4 md:mb-0">
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">情绪情感能量分配</h2>
+          <p class="text-gray-600">将10个苹果分配到不同的情绪情感中，计算总能量</p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4 w-full md:w-auto">
+          <div class="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+            <div class="text-3xl font-bold text-info mb-2" id="totalApples">10</div>
+            <div class="text-gray-600">总苹果数</div>
+          </div>
+          <div class="text-center p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
+            <div class="text-3xl font-bold text-warning mb-2" id="usedApples">0</div>
+            <div class="text-gray-600">已用苹果</div>
+          </div>
+          <div class="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+            <div class="text-3xl font-bold text-success mb-2" id="totalEnergy">0</div>
+            <div class="text-gray-600">总能量</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分配区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- 左侧：苹果分配区 -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">情绪情感分配</h2>
+            <div class="flex space-x-2">
+              <button id="sortEnergyBtn" class="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-lg transition-colors">
+                <i class="fa fa-sort-amount-desc mr-2"></i>按能量排序
+              </button>
+              <button id="resetBtn" class="bg-danger/10 hover:bg-danger/20 text-danger px-4 py-2 rounded-lg transition-colors">
+                <i class="fa fa-refresh mr-2"></i>重置
+              </button>
+            </div>
+          </div>
+          
+          <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2" id="emotionList">
+            <!-- 情绪情感卡片将通过JavaScript动态生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：分析区域 -->
+      <div class="space-y-8">
+        <!-- 能量分布图表 -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">能量分布</h3>
+          <div class="h-64">
+            <canvas id="energyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 分配摘要 -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h3 class="text-xl font-bold text-gray-800 mb-4">分配摘要</h3>
+          <div id="emptySummary" class="text-center py-8 text-gray-500">
+            <i class="fa fa-shopping-cart text-4xl mb-2"></i>
+            <p>尚未分配任何苹果</p>
+          </div>
+          <div class="space-y-3 hidden" id="summaryList">
+            <!-- 摘要内容将通过JavaScript动态生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="bg-gray-800 text-white py-8">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <div class="flex items-center space-x-2 mb-2">
+            <i class="fa fa-apple text-2xl"></i>
+            <span class="text-xl font-bold">苹果能量分配器</span>
+          </div>
+          <p class="text-gray-400">优化情绪能量分配，提升生活品质</p>
+        </div>
+        
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fa fa-facebook"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fa fa-twitter"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fa fa-instagram"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-white transition-colors">
+            <i class="fa fa-linkedin"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400">
+        <p>&copy; 2024 苹果能量分配器. 保留所有权利.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 帮助模态框 -->
+  <div id="helpModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-bold text-gray-800">使用帮助</h3>
+          <button id="closeHelpBtn" class="text-gray-500 hover:text-gray-700">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="p-6">
+        <div class="space-y-6">
+          <div>
+            <h4 class="font-bold text-lg mb-2">基本操作:</h4>
+            <p>点击情绪情感卡片上的"+"和"-"按钮来增加或减少分配的苹果数量。</p>
+          </div>
+          
+          <div>
+            <h4 class="font-bold text-lg mb-2">排序功能:</h4>
+            <p>点击"按能量排序"按钮可以按照能量值对情绪情感进行排序。再次点击可以切换升序/降序。</p>
+          </div>
+          
+          <div>
+            <h4 class="font-bold text-lg mb-2">重置功能:</h4>
+            <p>点击"重置"按钮可以将所有分配恢复到初始状态（0个苹果）。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 脚本 -->
+  <script>
+    // 情绪情感数据
+    const emotionData = [
+      { energy: 1000, emotion: "无可言说", expression: "纯粹的意识" },
+      { energy: 600, emotion: "至喜", expression: "光耀" },
+      { energy: 540, emotion: "平静", expression: "变形转化" },
+      { energy: 500, emotion: "荣耀", expression: "神启" },
+      { energy: 400, emotion: "理解", expression: "出神" },
+      { energy: 350, emotion: "宽恕", expression: "超脱" },
+      { energy: 310, emotion: "乐观", expression: "清晰意图" },
+      { energy: 250, emotion: "信任", expression: "安全感，释放" },
+      { energy: 200, emotion: "肯定", expression: "自我强大" },
+      { energy: 175, emotion: "藐视", expression: "狂妄" },
+      { energy: 150, emotion: "憎恨", expression: "侵略性" },
+      { energy: 125, emotion: "欲望", expression: "自我束缚" },
+      { energy: 100, emotion: "焦虑", expression: "退缩" },
+      { energy: 75, emotion: "后悔", expression: "沮丧" },
+      { energy: 50, emotion: "绝望", expression: "自我放弃" },
+      { energy: 30, emotion: "自责，罪疚", expression: "自毁" },
+      { energy: 20, emotion: "自闭", expression: "自我封闭" }
+    ];
+
+    // 全局变量
+    let appleDistribution = {};
+    let totalApples = 10;
+    let sortAscending = false;
+    let energyChart = null;
+
+    // DOM 元素
+    const emotionList = document.getElementById('emotionList');
+    const summaryList = document.getElementById('summaryList');
+    const emptySummary = document.getElementById('emptySummary');
+    const totalApplesElement = document.getElementById('totalApples');
+    const usedApplesElement = document.getElementById('usedApples');
+    const totalEnergyElement = document.getElementById('totalEnergy');
+    const sortEnergyBtn = document.getElementById('sortEnergyBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const helpBtn = document.getElementById('helpBtn');
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const navbar = document.getElementById('navbar');
+
+    // 初始化
+    function init() {
+      // 初始化苹果分配
+      emotionData.forEach(emotion => {
+        appleDistribution[emotion.emotion] = 0;
+      });
+
+      // 渲染情绪情感列表
+      renderEmotionList();
+      
+      // 初始化图表
+      initChart();
+      
+      // 更新统计信息
+      updateStats();
+      
+      // 添加事件监听器
+      addEventListeners();
+    }
+
+    // 渲染情绪情感列表
+    function renderEmotionList() {
+      emotionList.innerHTML = '';
+      
+      // 排序数据
+      const sortedData = [...emotionData].sort((a, b) => {
+        return sortAscending ? a.energy - b.energy : b.energy - a.energy;
+      });
+
+      // 创建情绪情感卡片
+      sortedData.forEach(emotion => {
+        const count = appleDistribution[emotion.emotion] || 0;
+        const totalEnergy = emotion.energy * count;
+        
+        // 根据能量值确定卡片样式
+        let energyClass = 'energy-low';
+        if (emotion.energy >= 500) {
+          energyClass = 'energy-high';
+        } else if (emotion.energy >= 200) {
+          energyClass = 'energy-medium';
+        }
+        
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-gray-200 rounded-lg p-4 card-hover';
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center">
+              <div class="${energyClass} text-white text-xs font-bold px-3 py-1 rounded-full mr-3">
+                ${emotion.energy}
+              </div>
+              <h3 class="font-bold text-gray-800">${emotion.emotion}</h3>
+            </div>
+            <div class="flex items-center">
+              <button class="decrease-btn bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center transition-colors" data-emotion="${emotion.emotion}">
+                <i class="fa fa-minus"></i>
+              </button>
+              <span class="mx-3 font-bold text-lg" data-emotion="${emotion.emotion}">${count}</span>
+              <button class="increase-btn bg-primary hover:bg-primary/90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors" data-emotion="${emotion.emotion}">
+                <i class="fa fa-plus"></i>
+              </button>
+            </div>
+          </div>
+          <div class="text-gray-600 text-sm mb-2">${emotion.expression}</div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-500">总能量: ${totalEnergy}</span>
+            <div class="w-24 bg-gray-200 rounded-full h-2">
+              <div class="bg-primary h-2 rounded-full transition-all duration-500" style="width: ${count * 10}%"></div>
+            </div>
+          </div>
+        `;
+        emotionList.appendChild(card);
+      });
+      
+      // 添加按钮事件监听器
+      document.querySelectorAll('.decrease-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const emotion = btn.getAttribute('data-emotion');
+          decreaseApple(emotion);
+        });
+      });
+      
+      document.querySelectorAll('.increase-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const emotion = btn.getAttribute('data-emotion');
+          increaseApple(emotion);
+        });
+      });
+    }
+
+    // 增加苹果
+    function increaseApple(emotion) {
+      const usedApples = Object.values(appleDistribution).reduce((sum, count) => sum + count, 0);
+      if (usedApples < totalApples) {
+        appleDistribution[emotion] = (appleDistribution[emotion] || 0) + 1;
+        updateUI();
+      }
+    }
+
+    // 减少苹果
+    function decreaseApple(emotion) {
+      if (appleDistribution[emotion] > 0) {
+        appleDistribution[emotion]--;
+        updateUI();
+      }
+    }
+
+    // 更新UI
+    function updateUI() {
+      renderEmotionList();
+      updateSummary();
+      updateStats();
+      updateChart();
+    }
+
+    // 更新摘要
+    function updateSummary() {
+      summaryList.innerHTML = '';
+      
+      const assignedEmotions = emotionData.filter(emotion => appleDistribution[emotion.emotion] > 0);
+      
+      if (assignedEmotions.length === 0) {
+        emptySummary.classList.remove('hidden');
+        summaryList.classList.add('hidden');
+        return;
+      }
+      
+      emptySummary.classList.add('hidden');
+      summaryList.classList.remove('hidden');
+      
+      // 按能量降序排序
+      assignedEmotions.sort((a, b) => b.energy - a.energy);
+      
+      assignedEmotions.forEach(emotion => {
+        const count = appleDistribution[emotion.emotion];
+        const totalEnergy = emotion.energy * count;
+        
+        const item = document.createElement('div');
+        item.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg';
+        item.innerHTML = `
+          <div>
+            <div class="font-medium">${emotion.emotion}</div>
+            <div class="text-sm text-gray-500">${count} 个苹果 × ${emotion.energy} 能量</div>
+          </div>
+          <div class="font-bold text-primary">${totalEnergy}</div>
+        `;
+        summaryList.appendChild(item);
+      });
+    }
+
+    // 更新统计信息
+    function updateStats() {
+      const usedApples = Object.values(appleDistribution).reduce((sum, count) => sum + count, 0);
+      const remainingApples = totalApples - usedApples;
+      const totalEnergy = emotionData.reduce((sum, emotion) => sum + (emotion.energy * appleDistribution[emotion.emotion]), 0);
+      
+      usedApplesElement.textContent = usedApples;
+      totalEnergyElement.textContent = totalEnergy;
+      
+      // 添加动画效果
+      usedApplesElement.classList.add('btn-pulse');
+      totalEnergyElement.classList.add('btn-pulse');
+      
+      setTimeout(() => {
+        usedApplesElement.classList.remove('btn-pulse');
+        totalEnergyElement.classList.remove('btn-pulse');
+      }, 1000);
+    }
+
+    // 初始化图表
+    function initChart() {
+      const ctx = document.getElementById('energyChart').getContext('2d');
+      
+      energyChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['已分配能量', '未分配能量'],
+          datasets: [{
+            data: [0, 10000],
+            backgroundColor: [
+              '#8B5CF6',
+              '#E5E7EB'
+            ],
+            borderWidth: 0,
+            cutout: '70%'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                font: {
+                  size: 12
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 更新图表
+    function updateChart() {
+      const totalEnergy = emotionData.reduce((sum, emotion) => sum + (emotion.energy * appleDistribution[emotion.emotion]), 0);
+      const maxPossibleEnergy = emotionData.reduce((sum, emotion) => sum + emotion.energy, 0) * totalApples / emotionData.length;
+      
+      energyChart.data.datasets[0].data = [totalEnergy, Math.max(0, maxPossibleEnergy - totalEnergy)];
+      energyChart.update();
+    }
+
+    // 重置分配
+    function resetDistribution() {
+      emotionData.forEach(emotion => {
+        appleDistribution[emotion.emotion] = 0;
+      });
+      updateUI();
+    }
+
+    // 切换排序方式
+    function toggleSort() {
+      sortAscending = !sortAscending;
+      sortEnergyBtn.innerHTML = sortAscending ? 
+        '<i class="fa fa-sort-amount-asc mr-2"></i>按能量升序' : 
+        '<i class="fa fa-sort-amount-desc mr-2"></i>按能量降序';
+      renderEmotionList();
+    }
+
+    // 添加事件监听器
+    function addEventListeners() {
+      // 滚动事件
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 10) {
+          navbar.classList.add('py-2');
+          navbar.classList.remove('py-3');
+        } else {
+          navbar.classList.add('py-3');
+          navbar.classList.remove('py-2');
+        }
+      });
+      
+      // 排序按钮
+      sortEnergyBtn.addEventListener('click', toggleSort);
+      
+      // 重置按钮
+      resetBtn.addEventListener('click', resetDistribution);
+      
+      // 帮助按钮
+      helpBtn.addEventListener('click', () => {
+        helpModal.classList.remove('hidden');
+      });
+      
+      closeHelpBtn.addEventListener('click', () => {
+        helpModal.classList.add('hidden');
+      });
+      
+      // 点击模态框外部关闭
+      helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) {
+          helpModal.classList.add('hidden');
+        }
+      });
+      
+      // 移动端菜单
+      const menuBtn = document.getElementById('menuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
