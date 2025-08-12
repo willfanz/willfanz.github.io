@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>颜色预览 | 色彩灵感</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#8B5CF6',
+            accent: '#EC4899',
+            dark: '#1E293B',
+            light: '#F8FAFC'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .color-card-shadow {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      }
+      .color-card-hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      .input-error {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-gray-50 text-dark min-h-screen">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white shadow-md fixed w-full top-0 z-50 transition-all duration-300" id="navbar">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-paint-brush text-primary text-2xl"></i>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">色彩预览</h1>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <button id="toggleTheme" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <i class="fa fa-moon-o text-gray-600"></i>
+        </button>
+        <button id="randomColors" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-all flex items-center">
+          <i class="fa fa-random mr-2"></i>
+          <span>随机颜色</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="container mx-auto px-4 pt-24 pb-16">
+    <!-- 页面标题和说明 -->
+    <div class="text-center mb-12">
+      <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4">探索色彩的世界</h2>
+      <p class="text-gray-600 max-w-2xl mx-auto text-lg">浏览各种精美的颜色样本，点击卡片查看详细信息，点击颜色代码即可复制。</p>
+    </div>
+    
+    <!-- 颜色代码输入区域 -->
+    <div class="mb-10 bg-white p-6 rounded-xl shadow-md">
+      <h3 class="text-xl font-semibold mb-4">输入颜色代码查看颜色</h3>
+      <div class="flex flex-col md:flex-row gap-4 items-center">
+        <div class="relative flex-grow">
+          <i class="fa fa-code absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input 
+            type="text" 
+            id="colorCodeInput" 
+            placeholder="输入HEX (#RRGGBB)、RGB (rgb(r,g,b)) 或 HSL (hsl(h,s%,l%)) 格式的颜色代码..." 
+            class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+          >
+          <div id="colorInputError" class="hidden text-red-500 text-sm mt-1 ml-10">
+            <i class="fa fa-exclamation-circle mr-1"></i>
+            <span>请输入有效的颜色代码</span>
+          </div>
+        </div>
+        
+        <div class="flex gap-3">
+          <div id="customColorPreview" class="w-16 h-16 rounded-lg border border-gray-200 bg-gray-100 transition-all duration-300"></div>
+          <button id="previewColorBtn" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg transition-all flex items-center">
+            <i class="fa fa-eye mr-2"></i>
+            <span>预览颜色</span>
+          </button>
+        </div>
+      </div>
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="p-3 bg-gray-50 rounded-lg text-sm">
+          <span class="font-medium">HEX格式：</span>
+          <span class="text-gray-600">如 #FF0000 或 FF0000</span>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg text-sm">
+          <span class="font-medium">RGB格式：</span>
+          <span class="text-gray-600">如 rgb(255, 0, 0) 或 rgba(255, 0, 0, 0.5)</span>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg text-sm">
+          <span class="font-medium">HSL格式：</span>
+          <span class="text-gray-600">如 hsl(0, 100%, 50%) 或 hsla(0, 100%, 50%, 0.5)</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 搜索和过滤 -->
+    <div class="mb-10 flex flex-col md:flex-row gap-4 justify-between items-center">
+      <div class="relative w-full md:w-96">
+        <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="搜索颜色名称或代码..." 
+          class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+        >
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <button class="filter-btn active px-4 py-2 rounded-full bg-primary text-white" data-filter="all">全部</button>
+        <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-filter="red">红色系</button>
+        <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-filter="blue">蓝色系</button>
+        <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-filter="green">绿色系</button>
+        <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-filter="yellow">黄色系</button>
+        <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" data-filter="purple">紫色系</button>
+      </div>
+    </div>
+    
+    <!-- 颜色卡片网格 -->
+    <div id="colorGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <!-- 颜色卡片将通过JavaScript动态生成 -->
+    </div>
+    
+    <!-- 加载更多按钮 -->
+    <div class="mt-12 text-center">
+      <button id="loadMore" class="px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors inline-flex items-center">
+        <span>加载更多</span>
+        <i class="fa fa-chevron-down ml-2"></i>
+      </button>
+    </div>
+  </main>
+
+  <!-- 颜色详情模态框 -->
+  <div id="colorModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-xl max-w-2xl w-full mx-4 transform scale-95 transition-transform duration-300" id="modalContent">
+      <div id="modalColorPreview" class="h-48 rounded-t-xl"></div>
+      <div class="p-6">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h3 id="modalColorName" class="text-2xl font-bold"></h3>
+            <p id="modalColorFamily" class="text-gray-500"></p>
+          </div>
+          <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <span class="text-gray-500">HEX</span>
+            <div class="flex items-center">
+              <span id="modalHexCode" class="font-mono"></span>
+              <button class="copy-btn ml-2 text-gray-400 hover:text-primary" data-target="hex">
+                <i class="fa fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <span class="text-gray-500">RGB</span>
+            <div class="flex items-center">
+              <span id="modalRgbCode" class="font-mono"></span>
+              <button class="copy-btn ml-2 text-gray-400 hover:text-primary" data-target="rgb">
+                <i class="fa fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <span class="text-gray-500">HSL</span>
+            <div class="flex items-center">
+              <span id="modalHslCode" class="font-mono"></span>
+              <button class="copy-btn ml-2 text-gray-400 hover:text-primary" data-target="hsl">
+                <i class="fa fa-copy"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6">
+          <h4 class="font-medium mb-3">互补色</h4>
+          <div id="complementaryColors" class="flex gap-2">
+            <!-- 互补色将通过JavaScript动态生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 复制提示 -->
+  <div id="copyToast" class="fixed bottom-6 right-6 bg-dark text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center">
+    <i class="fa fa-check-circle mr-2"></i>
+    <span>已复制到剪贴板</span>
+  </div>
+
+  <!-- 页脚 -->
+  <footer class="bg-white border-t border-gray-200 py-8">
+    <div class="container mx-auto px-4 text-center">
+      <p class="text-gray-600">© 2023 色彩预览 | 探索色彩的无限可能</p>
+      <div class="flex justify-center mt-4 space-x-4">
+        <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+          <i class="fa fa-github text-xl"></i>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+          <i class="fa fa-twitter text-xl"></i>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+          <i class="fa fa-dribbble text-xl"></i>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 颜色数据
+    const colors = [
+      { hex: '#FF5252', name: '红色', family: 'red', rgb: '255, 82, 82', hsl: '0, 100%, 66%' },
+      { hex: '#FF4081', name: '粉红', family: 'red', rgb: '255, 64, 129', hsl: '338, 100%, 62%' },
+      { hex: '#E91E63', name: '深粉', family: 'red', rgb: '233, 30, 99', hsl: '330, 87%, 53%' },
+      { hex: '#F50057', name: '艳粉', family: 'red', rgb: '245, 0, 87', hsl: '335, 100%, 48%' },
+      { hex: '#4CAF50', name: '绿色', family: 'green', rgb: '76, 175, 80', hsl: '122, 39%, 49%' },
+      { hex: '#8BC34A', name: '浅绿', family: 'green', rgb: '139, 195, 74', hsl: '80, 61%, 53%' },
+      { hex: '#CDDC39', name: '黄绿', family: 'green', rgb: '205, 220, 57', hsl: '65, 70%, 54%' },
+      { hex: '#00E676', name: '亮绿', family: 'green', rgb: '0, 230, 118', hsl: '144, 100%, 45%' },
+      { hex: '#2196F3', name: '蓝色', family: 'blue', rgb: '33, 150, 243', hsl: '207, 90%, 54%' },
+      { hex: '#03A9F4', name: '浅蓝', family: 'blue', rgb: '3, 169, 244', hsl: '199, 98%, 48%' },
+      { hex: '#00BCD4', name: '青蓝', family: 'blue', rgb: '0, 188, 212', hsl: '187, 100%, 41%' },
+      { hex: '#0097A7', name: '深青', family: 'blue', rgb: '0, 151, 167', hsl: '184, 100%, 33%' },
+      { hex: '#FFEB3B', name: '亮黄', family: 'yellow', rgb: '255, 235, 59', hsl: '54, 100%, 62%' },
+      { hex: '#FFC107', name: '黄色', family: 'yellow', rgb: '255, 193, 7', hsl: '45, 100%, 51%' },
+      { hex: '#FF9800', name: '橙色', family: 'yellow', rgb: '255, 152, 0', hsl: '36, 100%, 50%' },
+      { hex: '#FF5722', name: '橙红', family: 'yellow', rgb: '255, 87, 34', hsl: '14, 100%, 53%' },
+      { hex: '#9C27B0', name: '深紫', family: 'purple', rgb: '156, 39, 176', hsl: '291, 76%, 41%' },
+      { hex: '#E1BEE7', name: '浅紫', family: 'purple', rgb: '225, 190, 231', hsl: '283, 47%, 83%' },
+      { hex: '#BA68C8', name: '中紫', family: 'purple', rgb: '186, 104, 200', hsl: '291, 49%, 59%' },
+      { hex: '#673AB7', name: '靛蓝', family: 'purple', rgb: '103, 58, 183', hsl: '261, 73%, 57%' },
+      { hex: '#795548', name: '棕色', family: 'other', rgb: '121, 85, 72', hsl: '15, 20%, 38%' },
+      { hex: '#9E9E9E', name: '灰色', family: 'other', rgb: '158, 158, 158', hsl: '0, 0%, 62%' },
+      { hex: '#607D8B', name: '蓝灰', family: 'other', rgb: '96, 125, 139', hsl: '197, 16%, 46%' },
+      { hex: '#212121', name: '近黑', family: 'other', rgb: '33, 33, 33', hsl: '0, 0%, 13%' }
+    ];
+
+    // DOM 元素
+    const colorGrid = document.getElementById('colorGrid');
+    const searchInput = document.getElementById('searchInput');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const loadMoreBtn = document.getElementById('loadMore');
+    const colorModal = document.getElementById('colorModal');
+    const modalContent = document.getElementById('modalContent');
+    const closeModal = document.getElementById('closeModal');
+    const modalColorPreview = document.getElementById('modalColorPreview');
+    const modalColorName = document.getElementById('modalColorName');
+    const modalColorFamily = document.getElementById('modalColorFamily');
+    const modalHexCode = document.getElementById('modalHexCode');
+    const modalRgbCode = document.getElementById('modalRgbCode');
+    const modalHslCode = document.getElementById('modalHslCode');
+    const complementaryColors = document.getElementById('complementaryColors');
+    const copyButtons = document.querySelectorAll('.copy-btn');
+    const copyToast = document.getElementById('copyToast');
+    const toggleTheme = document.getElementById('toggleTheme');
+    const randomColorsBtn = document.getElementById('randomColors');
+    const navbar = document.getElementById('navbar');
+    
+    // 新增的颜色输入相关元素
+    const colorCodeInput = document.getElementById('colorCodeInput');
+    const previewColorBtn = document.getElementById('previewColorBtn');
+    const customColorPreview = document.getElementById('customColorPreview');
+    const colorInputError = document.getElementById('colorInputError');
+
+    // 初始显示的颜色数量
+    let displayedColors = 12;
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let isDarkMode = false;
+
+    // 生成颜色卡片
+    function renderColorCards() {
+      colorGrid.innerHTML = '';
+      
+      // 过滤颜色
+      let filteredColors = colors.filter(color => {
+        const matchesFamily = currentFilter === 'all' || color.family === currentFilter;
+        const matchesSearch = currentSearch === '' || 
+                             color.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                             color.hex.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                             color.rgb.includes(currentSearch) ||
+                             color.hsl.includes(currentSearch);
+        return matchesFamily && matchesSearch;
+      });
+      
+      // 限制显示数量
+      const colorsToShow = filteredColors.slice(0, displayedColors);
+      
+      // 渲染卡片
+      colorsToShow.forEach(color => {
+        const colorCard = document.createElement('div');
+        colorCard.className = 'color-card bg-white rounded-xl overflow-hidden shadow-lg transition-all duration-300 color-card-shadow hover:color-card-hover cursor-pointer';
+        colorCard.setAttribute('data-color', JSON.stringify(color));
+        
+        // 确定文本颜色（基于背景色亮度）
+        const textColor = getContrastColor(color.hex);
+        
+        colorCard.innerHTML = `
+          <div class="h-48" style="background-color: ${color.hex}"></div>
+          <div class="p-4">
+            <h3 class="font-bold text-lg" style="color: ${textColor}">${color.name}</h3>
+            <p class="text-sm mt-1 font-mono" style="color: ${textColor}">${color.hex}</p>
+          </div>
+        `;
+        
+        colorGrid.appendChild(colorCard);
+        
+        // 添加点击事件
+        colorCard.addEventListener('click', () => openColorModal(color));
+      });
+      
+      // 显示或隐藏加载更多按钮
+      loadMoreBtn.style.display = filteredColors.length > displayedColors ? 'inline-flex' : 'none';
+    }
+
+    // 打开颜色详情模态框
+    function openColorModal(color) {
+      modalColorPreview.style.backgroundColor = color.hex;
+      modalColorName.textContent = color.name;
+      modalColorFamily.textContent = getFamilyName(color.family);
+      modalHexCode.textContent = color.hex;
+      modalRgbCode.textContent = `rgb(${color.rgb})`;
+      modalHslCode.textContent = `hsl(${color.hsl})`;
+      
+      // 生成互补色
+      generateComplementaryColors(color);
+      
+      // 显示模态框
+      colorModal.classList.remove('opacity-0', 'pointer-events-none');
+      modalContent.classList.remove('scale-95');
+      modalContent.classList.add('scale-100');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // 关闭颜色详情模态框
+    function closeColorModal() {
+      colorModal.classList.add('opacity-0', 'pointer-events-none');
+      modalContent.classList.remove('scale-100');
+      modalContent.classList.add('scale-95');
+      document.body.style.overflow = '';
+    }
+
+    // 生成互补色
+    function generateComplementaryColors(color) {
+      complementaryColors.innerHTML = '';
+      
+      // 从HSL生成互补色
+      const hslParts = color.hsl.split(',');
+      const hue = parseInt(hslParts[0]);
+      
+      // 生成3种互补色
+      for (let i = 1; i <= 3; i++) {
+        const complementaryHue = (hue + i * 120) % 360;
+        const complementaryHsl = `${complementaryHue}${hslParts.slice(1).join(',')}`;
+        const complementaryHex = hslToHex(complementaryHue, 
+                                         parseFloat(hslParts[1]), 
+                                         parseFloat(hslParts[2]));
+        
+        const compColorEl = document.createElement('div');
+        compColorEl.className = 'w-12 h-12 rounded-full cursor-pointer transition-transform hover:scale-110';
+        compColorEl.style.backgroundColor = complementaryHex;
+        compColorEl.title = complementaryHex;
+        
+        // 添加点击事件以复制互补色代码
+        compColorEl.addEventListener('click', () => {
+          copyToClipboard(complementaryHex);
+        });
+        
+        complementaryColors.appendChild(compColorEl);
+      }
+    }
+
+    // 复制到剪贴板
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        // 显示复制提示
+        copyToast.classList.remove('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+          copyToast.classList.add('translate-y-20', 'opacity-0');
+        }, 2000);
+      });
+    }
+
+    // 加载更多颜色
+    function loadMoreColors() {
+      displayedColors += 8;
+      renderColorCards();
+    }
+
+    // 切换过滤条件
+    function setFilter(filter) {
+      currentFilter = filter;
+      displayedColors = 12;
+      
+      // 更新按钮样式
+      filterButtons.forEach(btn => {
+        if (btn.getAttribute('data-filter') === filter) {
+          btn.classList.add('bg-primary', 'text-white');
+          btn.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+        } else {
+          btn.classList.remove('bg-primary', 'text-white');
+          btn.classList.add('bg-gray-200', 'hover:bg-gray-300');
+        }
+      });
+      
+      renderColorCards();
+    }
+
+    // 搜索颜色
+    function searchColors(query) {
+      currentSearch = query;
+      displayedColors = 12;
+      renderColorCards();
+    }
+
+    // 生成随机颜色
+    function generateRandomColors() {
+      // 清空当前网格并添加加载动画
+      colorGrid.innerHTML = `
+        <div class="col-span-full flex justify-center items-center py-16">
+          <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      `;
+      
+      // 模拟加载延迟
+      setTimeout(() => {
+        // 生成12个随机颜色
+        const randomColors = [];
+        const families = ['red', 'blue', 'green', 'yellow', 'purple', 'other'];
+        const colorNames = ['赤', '橙', '黄', '绿', '青', '蓝', '紫', '粉', '棕', '灰', '黑', '白'];
+        
+        for (let i = 0; i < 12; i++) {
+          // 生成随机HEX颜色
+          const hex = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+          
+          // 转换为RGB
+          const r = parseInt(hex.slice(1, 3), 16);
+          const g = parseInt(hex.slice(3, 5), 16);
+          const b = parseInt(hex.slice(5, 7), 16);
+          
+          // 转换为HSL以确定颜色家族
+          const hsl = rgbToHsl(r, g, b);
+          let family = 'other';
+          
+          if (hsl.h >= 0 && hsl.h < 30 || hsl.h >= 330) family = 'red';
+          else if (hsl.h >= 30 && hsl.h < 90) family = 'yellow';
+          else if (hsl.h >= 90 && hsl.h < 150) family = 'green';
+          else if (hsl.h >= 150 && hsl.h < 210) family = 'blue';
+          else if (hsl.h >= 210 && hsl.h < 270) family = 'blue';
+          else if (hsl.h >= 270 && hsl.h < 330) family = 'purple';
+          
+          // 随机选择一个颜色名称
+          const name = colorNames[Math.floor(Math.random() * colorNames.length)] + Math.floor(Math.random() * 10);
+          
+          randomColors.push({
+            hex,
+            name,
+            family,
+            rgb: `${r}, ${g}, ${b}`,
+            hsl: `${Math.round(hsl.h)}, ${Math.round(hsl.s*100)}%, ${Math.round(hsl.l*100)}%`
+          });
+        }
+        
+        // 替换当前颜色列表并重新渲染
+        colors.splice(0, colors.length, ...randomColors);
+        displayedColors = 12;
+        renderColorCards();
+      }, 800);
+    }
+
+    // 切换深色/浅色模式
+    function toggleDarkMode() {
+      isDarkMode = !isDarkMode;
+      document.body.classList.toggle('bg-gray-900', isDarkMode);
+      document.body.classList.toggle('bg-gray-50', !isDarkMode);
+      document.body.classList.toggle('text-white', isDarkMode);
+      document.body.classList.toggle('text-dark', !isDarkMode);
+      
+      navbar.classList.toggle('bg-gray-800', isDarkMode);
+      navbar.classList.toggle('bg-white', !isDarkMode);
+      
+      toggleTheme.innerHTML = isDarkMode ? 
+        '<i class="fa fa-sun-o text-yellow-400"></i>' : 
+        '<i class="fa fa-moon-o text-gray-600"></i>';
+      
+      // 更新模态框样式
+      modalContent.classList.toggle('bg-gray-800', isDarkMode);
+      modalContent.classList.toggle('bg-white', !isDarkMode);
+      
+      // 重新渲染卡片以更新文本颜色
+      renderColorCards();
+    }
+
+    // 验证并预览输入的颜色代码
+    function previewColorCode() {
+      const colorCode = colorCodeInput.value.trim();
+      
+      // 清除之前的错误状态
+      colorCodeInput.classList.remove('input-error');
+      colorInputError.classList.add('hidden');
+      
+      if (!colorCode) {
+        // 重置预览区域
+        customColorPreview.style.backgroundColor = 'transparent';
+        return;
+      }
+      
+      // 验证颜色代码是否有效
+      if (isValidColor(colorCode)) {
+        // 处理HEX格式（可能没有#前缀）
+        const formattedColor = colorCode.startsWith('#') ? colorCode : 
+                              (isHexColor(colorCode) ? `#${colorCode}` : colorCode);
+        
+        // 应用颜色到预览区域
+        customColorPreview.style.backgroundColor = formattedColor;
+        
+        // 添加一个轻微的动画效果
+        customColorPreview.classList.add('scale-110');
+        setTimeout(() => {
+          customColorPreview.classList.remove('scale-110');
+        }, 300);
+        
+        // 如果是纯HEX代码（没有#），自动添加#并更新输入框
+        if (isHexColor(colorCode) && !colorCode.startsWith('#')) {
+          colorCodeInput.value = `#${colorCode}`;
+        }
+      } else {
+        // 显示错误状态
+        colorCodeInput.classList.add('input-error');
+        colorInputError.classList.remove('hidden');
+      }
+    }
+
+    // 检查颜色代码是否有效
+    function isValidColor(color) {
+      return isHexColor(color) || isRgbColor(color) || isHslColor(color);
+    }
+
+    // 检查是否为有效的HEX颜色
+    function isHexColor(color) {
+      // 允许3位或6位十六进制，可选#前缀
+      const hexRegex = /^#?([0-9A-Fa-f]{3}){1,2}$/;
+      return hexRegex.test(color);
+    }
+
+    // 检查是否为有效的RGB颜色
+    function isRgbColor(color) {
+      // 匹配rgb(r, g, b)或rgba(r, g, b, a)
+      const rgbRegex = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(0|1|0\.\d+)\s*)?\)$/;
+      const match = color.match(rgbRegex);
+      
+      if (!match) return false;
+      
+      // 检查RGB值是否在0-255范围内
+      return [match[1], match[2], match[3]].every(value => {
+        return parseInt(value) >= 0 && parseInt(value) <= 255;
+      });
+    }
+
+    // 检查是否为有效的HSL颜色
+    function isHslColor(color) {
+      // 匹配hsl(h, s%, l%)或hsla(h, s%, l%, a)
+      const hslRegex = /^hsla?\(\s*(\d{1,3})\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*(?:,\s*(0|1|0\.\d+)\s*)?\)$/;
+      const match = color.match(hslRegex);
+      
+      if (!match) return false;
+      
+      // 检查HSL值范围
+      const h = parseInt(match[1]);
+      const s = parseInt(match[2]);
+      const l = parseInt(match[3]);
+      
+      return h >= 0 && h <= 360 && s >= 0 && s <= 100 && l >= 0 && l <= 100;
+    }
+
+    // 工具函数：获取对比度颜色（黑或白）
+    function getContrastColor(hex) {
+      // 去掉#号
+      const cleanHex = hex.replace('#', '');
+      
+      // 转换为RGB
+      const r = parseInt(cleanHex.substring(0, 2), 16);
+      const g = parseInt(cleanHex.substring(2, 4), 16);
+      const b = parseInt(cleanHex.substring(4, 6), 16);
+      
+      // 计算亮度
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      
+      // 根据亮度返回黑色或白色
+      return luminance > 0.5 ? '#000000' : '#FFFFFF';
+    }
+
+    // 工具函数：获取颜色家族名称
+    function getFamilyName(familyCode) {
+      const familyNames = {
+        'red': '红色系',
+        'blue': '蓝色系',
+        'green': '绿色系',
+        'yellow': '黄色系',
+        'purple': '紫色系',
+        'other': '其他色系'
+      };
+      return familyNames[familyCode] || familyCode;
+    }
+
+    // 工具函数：RGB转HSL
+    function rgbToHsl(r, g, b) {
+      r /= 255;
+      g /= 255;
+      b /= 255;
+      
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      
+      if (max === min) {
+        h = s = 0; // 灰色
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        
+        h *= 60;
+      }
+      
+      return { h, s, l };
+    }
+
+    // 工具函数：HSL转HEX
+    function hslToHex(h, s, l) {
+      // 转换百分比
+      s = s / 100;
+      l = l / 100;
+      
+      let r, g, b;
+      
+      if (s === 0) {
+        r = g = b = l; // 灰色
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1/6) return p + (q - p) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          return p;
+        };
+        
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        
+        r = hue2rgb(p, q, h / 360 + 1/3);
+        g = hue2rgb(p, q, h / 360);
+        b = hue2rgb(p, q, h / 360 - 1/3);
+      }
+      
+      const toHex = x => {
+        const hex = Math.round(x * 255).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      };
+      
+      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    // 滚动事件处理（导航栏效果）
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('py-2');
+        navbar.classList.remove('py-4');
+        navbar.classList.add('shadow-lg');
+      } else {
+        navbar.classList.add('py-4');
+        navbar.classList.remove('py-2');
+        navbar.classList.remove('shadow-lg');
+      }
+    });
+
+    // 事件监听器
+    closeModal.addEventListener('click', closeColorModal);
+    colorModal.addEventListener('click', (e) => {
+      if (e.target === colorModal) closeColorModal();
+    });
+    
+    loadMoreBtn.addEventListener('click', loadMoreColors);
+    
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setFilter(btn.getAttribute('data-filter'));
+      });
+    });
+    
+    searchInput.addEventListener('input', (e) => {
+      searchColors(e.target.value);
+    });
+    
+    copyButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const target = btn.getAttribute('data-target');
+        let text = '';
+        
+        if (target === 'hex') text = modalHexCode.textContent;
+        else if (target === 'rgb') text = modalRgbCode.textContent;
+        else if (target === 'hsl') text = modalHslCode.textContent;
+        
+        copyToClipboard(text);
+      });
+    });
+    
+    toggleTheme.addEventListener('click', toggleDarkMode);
+    randomColorsBtn.addEventListener('click', generateRandomColors);
+    
+    // 新增的事件监听器
+    previewColorBtn.addEventListener('click', previewColorCode);
+    colorCodeInput.addEventListener('keypress', (e) => {
+      // 按下回车键时预览颜色
+      if (e.key === 'Enter') {
+        previewColorCode();
+      }
+    });
+
+    // 初始化页面
+    renderColorCards();
+  </script>
+</body>
+</html>
